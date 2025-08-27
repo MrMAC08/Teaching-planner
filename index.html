@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cell-input {
+            background: transparent;
+            border: none;
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            font-size: 13px;
+            resize: none;
+            outline: none;
+            min-height: 100px;
+            overflow: hidden;
+        }
+        .cell-input:focus {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 4px;
+        }
+        .time-block {
+            min-height: 100px;
+            vertical-align: top;
+        }
+        .subject-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 1px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .maths { background: #fef3c7; color: #92400e; }
+        .reading { background: #dbeafe; color: #1e40af; }
+        .writing { background: #f3e8ff; color: #7c3aed; }
+        .code { background: #d1fae5; color: #065f46; }
+        .library { background: #fce7f3; color: #be185d; }
+        .pe { background: #fed7d7; color: #c53030; }
+        .inquiry { background: #e0f2fe; color: #0277bd; }
+        .duty { background: #fef2f2; color: #dc2626; }
+        .tab-active {
+            background: #3b82f6;
+            color: white;
+            border-bottom: 3px solid #1d4ed8;
+        }
+        .tab-inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .tab-inactive:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .group-row {
+            border-bottom: 1px solid #d1d5db;
+        }
+        .group-input {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            border: none;
+            resize: none;
+            background: transparent;
+            font-size: 12px;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableSection, #printableSection * {
+                visibility: visible;
+            }
+            #printableSection {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Main Container -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200">
+                <button onclick="switchTab('schedule')" id="scheduleTabBtn" class="flex-1 px-6 py-4 font-semibold text-lg tab-active transition-all">
+                    📅 Weekly Schedule
+                </button>
+                <button onclick="switchTab('subjects')" id="subjectsTabBtn" class="flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all">
+                    📚 Subject Planning
+                </button>
+                <button onclick="switchTab('reports')" id="reportsTabBtn" class="flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all">
+                    📊 Student Reports
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Schedule Tab -->
+                <div id="scheduleTab" class="tab-content">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-6">Weekly Schedule</h1>
+                    
+                    <!-- Subject Tags -->
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-600 mb-3">Quick add subjects (click to insert):</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="subject-tag maths" onclick="insertSubject('Maths')">Maths</span>
+                            <span class="subject-tag reading" onclick="insertSubject('Reading')">Reading</span>
+                            <span class="subject-tag writing" onclick="insertSubject('Writing')">Writing</span>
+                            <span class="subject-tag code" onclick="insertSubject('The Code')">The Code</span>
+                            <span class="subject-tag library" onclick="insertSubject('Library')">Library</span>
+                            <span class="subject-tag pe" onclick="insertSubject('Physical Education')">Physical Education</span>
+                            <span class="subject-tag inquiry" onclick="insertSubject('Inquiry')">Inquiry</span>
+                            <span class="subject-tag duty" onclick="insertSubject('Duty')">Duty</span>
+                        </div>
+                    </div>
+
+                    <!-- Week Navigation -->
+                    <div class="flex items-center justify-between mb-6">
+                        <button onclick="changeWeek(-1)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            ← Previous Week
+                        </button>
+                        <h2 id="weekTitle" class="text-xl font-semibold text-gray-700"></h2>
+                        <button onclick="changeWeek(1)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            Next Week →
+                        </button>
+                    </div>
+
+                    <!-- View Options -->
+                    <div class="flex items-center justify-center gap-2 mb-6">
+                        <span class="text-sm text-gray-600">View:</span>
+                        <button onclick="setView('week')" id="weekViewBtn" class="px-3 py-1 rounded-lg bg-blue-500 text-white text-sm">Full Week</button>
+                        <button onclick="setView('monday')" id="mondayViewBtn" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Monday</button>
+                        <button onclick="setView('tuesday')" id="tuesdayViewBtn" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Tuesday</button>
+                        <button onclick="setView('wednesday')" id="wednesdayViewBtn" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Wednesday</button>
+                        <button onclick="setView('thursday')" id="thursdayViewBtn" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Thursday</button>
+                        <button onclick="setView('friday')" id="fridayViewBtn" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Friday</button>
+                    </div>
+
+                    <!-- Schedule Grid -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                                        <th class="p-3 text-left font-semibold w-32">Time</th>
+                                        <th id="mon-header" class="p-3 text-center font-semibold">Monday</th>
+                                        <th id="tue-header" class="p-3 text-center font-semibold">Tuesday</th>
+                                        <th id="wed-header" class="p-3 text-center font-semibold">Wednesday</th>
+                                        <th id="thu-header" class="p-3 text-center font-semibold">Thursday</th>
+                                        <th id="fri-header" class="p-3 text-center font-semibold">Friday</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="plannerBody">
+                                    <!-- Time blocks will be generated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Time Block Button -->
+                    <div class="mt-6 text-center">
+                        <button onclick="addTimeBlock()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            + Add Time Block
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Subject Planning Tab -->
+                <div id="subjectsTab" class="tab-content" style="display: none;">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-6">Subject Planning</h1>
+                    
+                    <!-- Subject Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Select Subject:</label>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button onclick="setSubjectPlan('Maths')" id="mathsPlanBtn" class="px-4 py-2 rounded-lg bg-yellow-500 text-white font-medium ring-2 ring-offset-2 ring-gray-400">Maths</button>
+                            <button onclick="setSubjectPlan('Writing')" id="writingPlanBtn" class="px-4 py-2 rounded-lg bg-purple-500 text-white font-medium">Writing</button>
+                            <button onclick="setSubjectPlan('Reading')" id="readingPlanBtn" class="px-4 py-2 rounded-lg bg-blue-500 text-white font-medium">Reading</button>
+                            <button onclick="setSubjectPlan('The Code')" id="codePlanBtn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-medium">The Code</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="customSubject" placeholder="Add custom subject..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                            <button onclick="addCustomSubject()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Add Subject</button>
+                        </div>
+                    </div>
+
+                    <!-- WALT and Success Criteria -->
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">WALT (We Are Learning To):</label>
+                            <textarea id="waltInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter learning objectives..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Success Criteria:</label>
+                            <textarea id="successInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter success criteria..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Links Section -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Resource Links:</label>
+                        <div id="linksContainer" class="space-y-2">
+                            <div class="flex gap-2">
+                                <input type="text" placeholder="Link title..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="url" placeholder="https://..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                                <button onclick="addLink(this)" class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Subject Planner Grid -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[800px]" id="planningTable">
+                                <thead>
+                                    <tr class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                                        <th class="p-3 text-left font-semibold w-40 border-r border-white">Activity Type</th>
+                                        <th class="p-3 text-center font-semibold border-r border-white">Monday</th>
+                                        <th class="p-3 text-center font-semibold border-r border-white">Tuesday</th>
+                                        <th class="p-3 text-center font-semibold border-r border-white">Wednesday</th>
+                                        <th class="p-3 text-center font-semibold border-r border-white">Thursday</th>
+                                        <th class="p-3 text-center font-semibold">Friday</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="planningTableBody">
+                                    <tr class="border-b border-gray-300">
+                                        <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Warm up/Review Activities</td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300">
+                                        <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Whole Class Teaching</td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300">
+                                        <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Tasks (Whole Class/Groups)</td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Groups Management -->
+                    <div class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-2">👥 Manage Groups</h3>
+                        <p class="text-sm text-yellow-700 mb-3">Add up to 3 differentiated groups for your lesson planning:</p>
+                        <div class="flex gap-2">
+                            <button onclick="addGroup()" id="addGroupBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                + Add Group
+                            </button>
+                            <button onclick="removeGroup()" id="removeGroupBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" style="display: none;">
+                                - Remove Group
+                            </button>
+                            <span id="groupCount" class="px-3 py-2 bg-yellow-100 rounded-lg text-yellow-800 text-sm font-medium">Groups: 0/3</span>
+                        </div>
+                    </div>
+
+                    <!-- Save Options at Bottom -->
+                    <div class="mt-6 space-y-4">
+                        <!-- Print/Save as PDF -->
+                        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">🖨️ Print or Save as PDF</h3>
+                            <p class="text-sm text-green-700 mb-3">Print your WALT, Success Criteria, and weekly activities table:</p>
+                            <div class="flex gap-3">
+                                <button onclick="printLessonPlan();" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🖨️ Print Lesson Plan
+                                </button>
+                                <button onclick="printLessonPlan(); downloadAsPDF();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    📄 Save as PDF
+                                </button>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <!-- Student Reports Tab -->
+                <div id="reportsTab" class="tab-content" style="display: none;">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-6">Student Reports</h1>
+                    
+                    <!-- Student Names Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Student Names (paste or type one per line):</label>
+                        <textarea id="studentNamesInput" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none" placeholder="Enter student names, one per line:&#10;John Smith&#10;Sarah Johnson&#10;Mike Brown"></textarea>
+                        <button onclick="generateStudentGrid()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Generate Student Grid
+                        </button>
+                    </div>
+
+                    <!-- Print Reports -->
+                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h3 class="text-lg font-semibold text-green-800 mb-2">📊 Print Student Reports</h3>
+                        <p class="text-sm text-green-700 mb-3">Print your student reports with optimized A4 formatting:</p>
+                        <div class="flex gap-3">
+                            <button onclick="printStudentReports()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                🖨️ Print Reports
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Student Reports Grid -->
+                    <div id="reportsGridContainer" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="p-6 text-center text-gray-500">
+                            <p>Enter student names above and click "Generate Student Grid" to create your reports table.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentWeekStart = new Date(2024, 10, 25); // November 25, 2024 (Monday)
+        let timeBlocks = [
+            { start: '9:00', end: '10:30', label: 'Block 1' },
+            { start: '10:30', end: '11:00', label: 'Break' },
+            { start: '11:00', end: '12:30', label: 'Block 2' },
+            { start: '12:30', end: '1:15', label: 'Lunch' },
+            { start: '1:15', end: '2:45', label: 'Block 3' }
+        ];
+        let lastFocusedCell = null;
+        let currentView = 'week';
+        let currentSubject = 'Maths';
+        let customSubjects = [];
+        let groupCount = 0;
+        const maxGroups = 3;
+
+        function updateWeekDates() {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            for (let i = 0; i < 5; i++) {
+                const date = new Date(currentWeekStart);
+                date.setDate(currentWeekStart.getDate() + i);
+                const dayName = days[i];
+                const dayNum = date.getDate();
+                const monthName = months[date.getMonth()];
+                
+                document.getElementById(`${dayName.toLowerCase().slice(0,3)}-header`).textContent = 
+                    `${dayName}\n${dayNum} ${monthName}`;
+            }
+
+            // Update week title
+            const endDate = new Date(currentWeekStart);
+            endDate.setDate(currentWeekStart.getDate() + 4);
+            document.getElementById('weekTitle').textContent = 
+                `Week of ${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} - ${endDate.getDate()} ${months[endDate.getMonth()]} ${currentWeekStart.getFullYear()}`;
+        }
+
+        function changeWeek(direction) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+            updateWeekDates();
+        }
+
+        function generatePlannerGrid() {
+            const tbody = document.getElementById('plannerBody');
+            tbody.innerHTML = '';
+
+            timeBlocks.forEach((block, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                
+                // Time column
+                const timeCell = document.createElement('td');
+                timeCell.className = 'p-3 bg-gray-50 border-r border-gray-200 font-medium text-gray-700';
+                timeCell.innerHTML = `
+                    <div class="text-sm font-semibold">${block.label}</div>
+                    <div class="text-xs text-gray-500">${block.start} - ${block.end}</div>
+                `;
+                row.appendChild(timeCell);
+
+                // Day columns
+                for (let day = 0; day < 5; day++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'p-1 border-r border-gray-200 time-block relative';
+                    
+                    const textarea = document.createElement('textarea');
+                    textarea.className = 'cell-input';
+                    textarea.placeholder = 'Click to add...';
+                    textarea.addEventListener('focus', () => {
+                        lastFocusedCell = textarea;
+                    });
+                    textarea.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = Math.max(100, this.scrollHeight) + 'px';
+                    });
+                    
+                    cell.appendChild(textarea);
+                    row.appendChild(cell);
+                }
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function insertSubject(subject) {
+            if (lastFocusedCell) {
+                const currentValue = lastFocusedCell.value;
+                const newValue = currentValue ? `${currentValue}\n${subject}` : subject;
+                lastFocusedCell.value = newValue;
+                lastFocusedCell.dispatchEvent(new Event('input'));
+                lastFocusedCell.focus();
+            } else {
+                alert('Please click on a cell first, then select a subject to add.');
+            }
+        }
+
+        function addTimeBlock() {
+            const startTime = prompt('Enter start time (e.g., 3:00):');
+            const endTime = prompt('Enter end time (e.g., 4:30):');
+            const label = prompt('Enter block label (e.g., Block 4):');
+            
+            if (startTime && endTime && label) {
+                timeBlocks.push({ start: startTime, end: endTime, label: label });
+                generatePlannerGrid();
+            }
+        }
+
+        function setView(view) {
+            currentView = view;
+            
+            // Update button styles
+            document.querySelectorAll('[id$="ViewBtn"]').forEach(btn => {
+                btn.className = 'px-3 py-1 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300';
+            });
+            document.getElementById(view + 'ViewBtn').className = 'px-3 py-1 rounded-lg bg-blue-500 text-white text-sm';
+            
+            // Show/hide columns
+            const table = document.querySelector('#plannerBody').closest('table');
+            const headers = table.querySelectorAll('th');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            if (view === 'week') {
+                // Show all columns
+                headers.forEach(header => header.style.display = '');
+                rows.forEach(row => {
+                    row.querySelectorAll('td').forEach(cell => cell.style.display = '');
+                });
+            } else {
+                // Hide all day columns first
+                for (let i = 1; i <= 5; i++) {
+                    headers[i].style.display = 'none';
+                    rows.forEach(row => {
+                        if (row.cells[i]) row.cells[i].style.display = 'none';
+                    });
+                }
+                
+                // Show selected day
+                const dayIndex = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].indexOf(view) + 1;
+                if (dayIndex > 0) {
+                    headers[dayIndex].style.display = '';
+                    rows.forEach(row => {
+                        if (row.cells[dayIndex]) row.cells[dayIndex].style.display = '';
+                    });
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.getElementById('scheduleTab').style.display = 'none';
+            document.getElementById('subjectsTab').style.display = 'none';
+            document.getElementById('reportsTab').style.display = 'none';
+            
+            // Show selected tab
+            document.getElementById(tab + 'Tab').style.display = 'block';
+            
+            // Update tab button styles
+            document.getElementById('scheduleTabBtn').className = 
+                tab === 'schedule' ? 'flex-1 px-6 py-4 font-semibold text-lg tab-active transition-all' : 'flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all';
+            document.getElementById('subjectsTabBtn').className = 
+                tab === 'subjects' ? 'flex-1 px-6 py-4 font-semibold text-lg tab-active transition-all' : 'flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all';
+            document.getElementById('reportsTabBtn').className = 
+                tab === 'reports' ? 'flex-1 px-6 py-4 font-semibold text-lg tab-active transition-all' : 'flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all';
+        }
+
+        function setSubjectPlan(subject) {
+            currentSubject = subject;
+            
+            // Update button styles
+            document.querySelectorAll('[id$="PlanBtn"]').forEach(btn => {
+                btn.className = btn.className.replace(' ring-2 ring-offset-2 ring-gray-400', '');
+            });
+            
+            const btnId = subject.toLowerCase().replace(/\s+/g, '').replace('the', '') + 'PlanBtn';
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.className += ' ring-2 ring-offset-2 ring-gray-400';
+            }
+        }
+
+        function addCustomSubject() {
+            const input = document.getElementById('customSubject');
+            const subject = input.value.trim();
+            
+            if (subject && !customSubjects.includes(subject)) {
+                customSubjects.push(subject);
+                
+                // Add button
+                const container = input.parentElement.previousElementSibling;
+                const button = document.createElement('button');
+                button.textContent = subject;
+                button.className = 'px-4 py-2 rounded-lg bg-gray-500 text-white font-medium';
+                button.onclick = () => setSubjectPlan(subject);
+                button.id = subject.toLowerCase().replace(/\s+/g, '') + 'PlanBtn';
+                container.appendChild(button);
+                
+                input.value = '';
+                setSubjectPlan(subject);
+            }
+        }
+
+        function addLink(button) {
+            const row = button.parentElement;
+            const titleInput = row.children[0];
+            const urlInput = row.children[1];
+            
+            if (titleInput.value && urlInput.value) {
+                let url = urlInput.value.trim();
+                
+                // Auto-add https:// if no protocol is specified
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                
+                // Create link display
+                const linkDiv = document.createElement('div');
+                linkDiv.className = 'flex items-center justify-between bg-blue-50 p-3 rounded-lg mb-2 border border-blue-200';
+                linkDiv.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-blue-600">🔗</span>
+                        <a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">${titleInput.value}</a>
+                        <span class="text-xs text-gray-500">(${url})</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50">✕ Remove</button>
+                `;
+                
+                // Insert before the input row
+                row.parentElement.insertBefore(linkDiv, row);
+                
+                // Clear inputs
+                titleInput.value = '';
+                urlInput.value = '';
+            } else {
+                alert('Please enter both a title and URL for the link.');
+            }
+        }
+
+        function addGroup() {
+            if (groupCount >= maxGroups) {
+                alert('Maximum of 3 groups allowed.');
+                return;
+            }
+
+            groupCount++;
+            const groupName = prompt(`Enter name for Group ${groupCount}:`) || `Group ${groupCount}`;
+            
+            const tbody = document.getElementById('planningTableBody');
+            const newRow = document.createElement('tr');
+            newRow.className = 'group-row border-b border-gray-300';
+            newRow.id = `group-${groupCount}`;
+            
+            const colors = ['bg-blue-50 text-blue-800', 'bg-green-50 text-green-800', 'bg-purple-50 text-purple-800'];
+            const colorClass = colors[groupCount - 1];
+            
+            newRow.innerHTML = `
+                <td class="p-3 ${colorClass} border-r border-gray-300 font-medium">
+                    <input type="text" value="${groupName}" class="bg-transparent border-none font-medium text-sm w-full" onchange="updateGroupName(${groupCount}, this.value)">
+                </td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+                <td class="p-1"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+            `;
+            
+            tbody.appendChild(newRow);
+            updateGroupButtons();
+        }
+
+        function removeGroup() {
+            if (groupCount <= 0) return;
+            
+            const groupRow = document.getElementById(`group-${groupCount}`);
+            if (groupRow) {
+                groupRow.remove();
+                groupCount--;
+                updateGroupButtons();
+            }
+        }
+
+        function updateGroupButtons() {
+            const addBtn = document.getElementById('addGroupBtn');
+            const removeBtn = document.getElementById('removeGroupBtn');
+            const countSpan = document.getElementById('groupCount');
+            
+            countSpan.textContent = `Groups: ${groupCount}/${maxGroups}`;
+            
+            if (groupCount >= maxGroups) {
+                addBtn.style.display = 'none';
+            } else {
+                addBtn.style.display = 'inline-block';
+            }
+            
+            if (groupCount > 0) {
+                removeBtn.style.display = 'inline-block';
+            } else {
+                removeBtn.style.display = 'none';
+            }
+        }
+
+        function updateGroupName(groupNum, newName) {
+            const row = document.getElementById(`group-${groupNum}`);
+            if (row) {
+                const textareas = row.querySelectorAll('textarea');
+                textareas.forEach(textarea => {
+                    textarea.placeholder = `Enter ${newName} activities...`;
+                });
+            }
+        }
+
+        function copyForGoogleDocs() {
+            try {
+                // Get all the data
+                const walt = document.getElementById('waltInput').value || '';
+                const success = document.getElementById('successInput').value || '';
+                
+                // Get links
+                const links = [];
+                document.querySelectorAll('#linksContainer a').forEach(link => {
+                    links.push({ title: link.textContent, url: link.href });
+                });
+                
+                // Get planning data from textareas
+                const planningTextareas = document.querySelectorAll('#subjectsTab table tbody textarea');
+                const activities = {
+                    warmup: [],
+                    teaching: [],
+                    tasks: [],
+                    groups: []
+                };
+                
+                // Get main activities (first 15 textareas)
+                for (let i = 0; i < 5; i++) {
+                    activities.warmup.push(planningTextareas[i]?.value || '');
+                }
+                for (let i = 5; i < 10; i++) {
+                    activities.teaching.push(planningTextareas[i]?.value || '');
+                }
+                for (let i = 10; i < 15; i++) {
+                    activities.tasks.push(planningTextareas[i]?.value || '');
+                }
+                
+                // Get group activities
+                for (let g = 1; g <= groupCount; g++) {
+                    const groupRow = document.getElementById(`group-${g}`);
+                    if (groupRow) {
+                        const groupName = groupRow.querySelector('input').value;
+                        const groupTextareas = groupRow.querySelectorAll('textarea');
+                        const groupActivities = [];
+                        groupTextareas.forEach(textarea => {
+                            groupActivities.push(textarea.value || '');
+                        });
+                        activities.groups.push({ name: groupName, activities: groupActivities });
+                    }
+                }
+                
+                // Get week date
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const weekStart = `${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
+                
+                // Create improved tab-separated format
+                let content = `${currentSubject.toUpperCase()} LESSON PLAN - Week of ${weekStart}\n\n`;
+                
+                // Add WALT and Success Criteria at the top
+                if (walt) {
+                    content += `WALT (We Are Learning To):\n${walt}\n\n`;
+                }
+                if (success) {
+                    content += `Success Criteria:\n${success}\n\n`;
+                }
+                
+                // Add links if any
+                if (links.length > 0) {
+                    content += `Resource Links:\n`;
+                    links.forEach(link => {
+                        content += `• ${link.title}: ${link.url}\n`;
+                    });
+                    content += `\n`;
+                }
+                
+                // Create the weekly planning table with proper formatting
+                content += `WEEKLY ACTIVITIES:\n\n`;
+                
+                // Create header row with proper tab separation
+                content += `Activity Type\tMonday\tTuesday\tWednesday\tThursday\tFriday\n`;
+                
+                // Ensure each cell has content or placeholder to maintain table structure
+                const warmupRow = activities.warmup.map(item => item.trim() || '[Enter activities]').join('\t');
+                const teachingRow = activities.teaching.map(item => item.trim() || '[Enter activities]').join('\t');
+                const tasksRow = activities.tasks.map(item => item.trim() || '[Enter activities]').join('\t');
+                
+                content += `Warm up/Review Activities\t${warmupRow}\n`;
+                content += `Whole Class Teaching\t${teachingRow}\n`;
+                content += `Tasks (Whole Class/Groups)\t${tasksRow}\n`;
+                
+                // Add group rows with proper formatting
+                activities.groups.forEach(group => {
+                    const groupRow = group.activities.map(item => item.trim() || '[Enter activities]').join('\t');
+                    content += `${group.name}\t${groupRow}\n`;
+                });
+                
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(content).then(() => {
+                        alert('✅ Lesson plan copied successfully!\n\n📋 Next steps:\n1. Click "Open Google Docs" below\n2. Create a new document\n3. Paste (Ctrl+V or Cmd+V)\n\n🎯 Google Docs will automatically convert the tabs into a proper table!');
+                    }).catch(() => {
+                        fallbackCopy(content);
+                    });
+                } else {
+                    fallbackCopy(content);
+                }
+                
+            } catch (error) {
+                console.error('Copy error:', error);
+                alert('❌ Copy failed. Please try again or use a different browser.');
+            }
+        }
+        
+        function fallbackCopy(content) {
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    alert('✅ Lesson plan copied!\n\nPaste into Google Docs and it will automatically create a formatted table.');
+                } else {
+                    alert('❌ Copy failed. Please select all the text manually and copy it.');
+                }
+            } catch (err) {
+                alert('❌ Copy not supported. Please select and copy the text manually.');
+            }
+        }
+
+        function printStudentReports() {
+            const table = document.querySelector('#reportsGridContainer table');
+            if (!table) {
+                alert('Please generate the student grid first.');
+                return;
+            }
+
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            
+            // Get week date
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const weekStart = `${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
+            
+            // Build table rows
+            let tableRows = '';
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const studentName = cells[0].textContent.trim();
+                
+                tableRows += `<tr><td style="border: 1px solid #666; padding: 6px; font-weight: bold; background: #f5f5f5;">${studentName}</td>`;
+                
+                // Get textarea values
+                for (let i = 1; i < cells.length; i++) {
+                    const textarea = cells[i].querySelector('textarea');
+                    const value = textarea ? textarea.value.trim() || '' : '';
+                    tableRows += `<td style="border: 1px solid #666; padding: 6px; vertical-align: top; min-height: 60px;">${value.replace(/\n/g, '<br>')}</td>`;
+                }
+                tableRows += '</tr>';
+            });
+            
+            // Create the print document
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Student Reports - Week of ${weekStart}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 10px; font-size: 12px; }
+                        h1 { text-align: center; margin-bottom: 8px; font-size: 18px; }
+                        .week { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+                        th, td { border: 1px solid #666; padding: 6px; text-align: left; }
+                        th { background: #e5e5e5; font-weight: bold; text-align: center; }
+                        @media print {
+                            body { margin: 8px; }
+                            @page { margin: 0.5in; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>STUDENT REPORTS</h1>
+                    <div class="week">Week of ${weekStart}</div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 150px;">Student Name</th>
+                                <th>Maths</th>
+                                <th>Writing</th>
+                                <th>Reading</th>
+                                <th>The Code</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        function generateStudentGrid() {
+            const namesInput = document.getElementById('studentNamesInput').value.trim();
+            if (!namesInput) {
+                alert('Please enter student names first.');
+                return;
+            }
+
+            const studentNames = namesInput.split('\n').filter(name => name.trim() !== '');
+            const subjects = ['Maths', 'Writing', 'Reading', 'The Code'];
+            
+            const container = document.getElementById('reportsGridContainer');
+            
+            let gridHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[600px]">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                                <th class="p-3 text-left font-semibold border-r border-white">Student Name</th>
+                                <th class="p-3 text-center font-semibold border-r border-white">Maths</th>
+                                <th class="p-3 text-center font-semibold border-r border-white">Writing</th>
+                                <th class="p-3 text-center font-semibold border-r border-white">Reading</th>
+                                <th class="p-3 text-center font-semibold">The Code</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            studentNames.forEach((name, index) => {
+                gridHTML += `
+                    <tr class="border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+                        <td class="p-3 font-medium border-r border-gray-200">${name.trim()}</td>
+                        <td class="p-1 border-r border-gray-200">
+                            <textarea class="w-full h-20 p-2 border-none resize-none bg-transparent" placeholder="Enter notes for Maths..."></textarea>
+                        </td>
+                        <td class="p-1 border-r border-gray-200">
+                            <textarea class="w-full h-20 p-2 border-none resize-none bg-transparent" placeholder="Enter notes for Writing..."></textarea>
+                        </td>
+                        <td class="p-1 border-r border-gray-200">
+                            <textarea class="w-full h-20 p-2 border-none resize-none bg-transparent" placeholder="Enter notes for Reading..."></textarea>
+                        </td>
+                        <td class="p-1">
+                            <textarea class="w-full h-20 p-2 border-none resize-none bg-transparent" placeholder="Enter notes for The Code..."></textarea>
+                        </td>
+                    </tr>`;
+            });
+            
+            gridHTML += `
+                        </tbody>
+                    </table>
+                </div>`;
+            
+            container.innerHTML = gridHTML;
+        }
+
+        function printLessonPlan() {
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            
+            // Get all the data
+            const walt = document.getElementById('waltInput').value || 'No learning objectives entered';
+            const success = document.getElementById('successInput').value || 'No success criteria entered';
+            
+            // Get links
+            let linksHTML = '';
+            const links = document.querySelectorAll('#linksContainer a');
+            if (links.length > 0) {
+                linksHTML = '<div style="margin-bottom: 20px;"><h3 style="font-weight: bold; margin-bottom: 10px;">Resource Links:</h3>';
+                links.forEach(link => {
+                    linksHTML += `<div>• ${link.textContent}: ${link.href}</div>`;
+                });
+                linksHTML += '</div>';
+            }
+            
+            // Get week date
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const weekStart = `${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
+            
+            // Get planning data from textareas
+            const planningTextareas = document.querySelectorAll('#subjectsTab table tbody textarea');
+            
+            // Build table rows
+            let tableRows = '';
+            
+            // Warmup row
+            tableRows += '<tr><td style="border: 1px solid #666; padding: 8px; background: #f5f5f5; font-weight: bold;">Warm up/Review Activities</td>';
+            for (let i = 0; i < 5; i++) {
+                const content = planningTextareas[i]?.value || '';
+                tableRows += `<td style="border: 1px solid #666; padding: 8px; vertical-align: top; min-height: 80px;">${content.replace(/\n/g, '<br>')}</td>`;
+            }
+            tableRows += '</tr>';
+            
+            // Teaching row
+            tableRows += '<tr><td style="border: 1px solid #666; padding: 8px; background: #f5f5f5; font-weight: bold;">Whole Class Teaching</td>';
+            for (let i = 5; i < 10; i++) {
+                const content = planningTextareas[i]?.value || '';
+                tableRows += `<td style="border: 1px solid #666; padding: 8px; vertical-align: top; min-height: 80px;">${content.replace(/\n/g, '<br>')}</td>`;
+            }
+            tableRows += '</tr>';
+            
+            // Tasks row
+            tableRows += '<tr><td style="border: 1px solid #666; padding: 8px; background: #f5f5f5; font-weight: bold;">Tasks (Whole Class/Groups)</td>';
+            for (let i = 10; i < 15; i++) {
+                const content = planningTextareas[i]?.value || '';
+                tableRows += `<td style="border: 1px solid #666; padding: 8px; vertical-align: top; min-height: 80px;">${content.replace(/\n/g, '<br>')}</td>`;
+            }
+            tableRows += '</tr>';
+            
+            // Group rows
+            for (let g = 1; g <= groupCount; g++) {
+                const groupRow = document.getElementById(`group-${g}`);
+                if (groupRow) {
+                    const groupName = groupRow.querySelector('input').value;
+                    const groupTextareas = groupRow.querySelectorAll('textarea');
+                    
+                    tableRows += `<tr><td style="border: 1px solid #666; padding: 8px; background: #f5f5f5; font-weight: bold;">${groupName}</td>`;
+                    groupTextareas.forEach(textarea => {
+                        const content = textarea.value || '';
+                        tableRows += `<td style="border: 1px solid #666; padding: 8px; vertical-align: top; min-height: 80px;">${content.replace(/\n/g, '<br>')}</td>`;
+                    });
+                    tableRows += '</tr>';
+                }
+            }
+            
+            // Create the print document
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${currentSubject} Lesson Plan - Week of ${weekStart}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 10px; font-size: 12px; }
+                        h1 { text-align: center; margin-bottom: 8px; font-size: 18px; }
+                        .week { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
+                        .section { margin-bottom: 15px; }
+                        .section h3 { font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+                        .walt-success { display: flex; gap: 15px; margin-bottom: 20px; }
+                        .walt-success > div { flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 3px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+                        th, td { border: 1px solid #666; padding: 6px; text-align: left; }
+                        th { background: #e5e5e5; font-weight: bold; text-align: center; }
+                        .activity-type { background: #f5f5f5; font-weight: bold; }
+                        @media print {
+                            body { margin: 8px; }
+                            .no-print { display: none; }
+                            @page { margin: 0.5in; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${currentSubject.toUpperCase()} LESSON PLAN</h1>
+                    <div class="week">Week of ${weekStart}</div>
+                    
+                    <div class="walt-success">
+                        <div>
+                            <h3>WALT (We Are Learning To):</h3>
+                            <div>${walt.replace(/\n/g, '<br>')}</div>
+                        </div>
+                        <div>
+                            <h3>Success Criteria:</h3>
+                            <div>${success.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    </div>
+                    
+                    ${linksHTML}
+                    
+                    <div class="section">
+                        <h3>Weekly Activities:</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 200px;">Activity Type</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        function downloadAsPDF() {
+            // For browsers that support it, trigger the print dialog with PDF option
+            // Most modern browsers allow "Save as PDF" in the print dialog
+            alert('📄 To save as PDF:\n\n1. In the print dialog that opens, look for "Destination" or "Printer"\n2. Select "Save as PDF" or "Microsoft Print to PDF"\n3. Click "Save" and choose your location\n\n🖨️ The print dialog will open now...');
+        }
+
+        // Initialize the planner
+        updateWeekDates();
+        generatePlannerGrid();
+        updateGroupButtons();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9758abb29358d9b0',t:'MTc1NjI2NzMxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
