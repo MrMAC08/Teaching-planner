@@ -43,6 +43,9 @@
         .pe { background: #fed7d7; color: #c53030; }
         .inquiry { background: #e0f2fe; color: #0277bd; }
         .duty { background: #fef2f2; color: #dc2626; }
+        .handwriting { background: #fef7cd; color: #a16207; }
+        .art { background: #ecfdf5; color: #047857; }
+        .novel { background: #f0f9ff; color: #0369a1; }
         .tab-active {
             background: #3b82f6;
             color: white;
@@ -129,6 +132,9 @@
                             <span class="subject-tag pe" onclick="insertSubject('Physical Education')">Physical Education</span>
                             <span class="subject-tag inquiry" onclick="insertSubject('Inquiry')">Inquiry</span>
                             <span class="subject-tag duty" onclick="insertSubject('Duty')">Duty</span>
+                            <span class="subject-tag handwriting" onclick="insertSubject('Handwriting')">Handwriting</span>
+                            <span class="subject-tag art" onclick="insertSubject('Art')">Art</span>
+                            <span class="subject-tag novel" onclick="insertSubject('Class Novel')">Class Novel</span>
                         </div>
                     </div>
 
@@ -345,6 +351,7 @@
     <script>
         let currentWeekStart = new Date(2024, 10, 25); // November 25, 2024 (Monday)
         let timeBlocks = [
+            { start: '', end: '', label: 'Morning Routine', isRoutine: true },
             { start: '9:00', end: '10:30', label: 'Block 1' },
             { start: '10:30', end: '11:00', label: 'Break' },
             { start: '11:00', end: '12:30', label: 'Block 2' },
@@ -396,29 +403,78 @@
                 // Time column
                 const timeCell = document.createElement('td');
                 timeCell.className = 'p-3 bg-gray-50 border-r border-gray-200 font-medium text-gray-700';
-                timeCell.innerHTML = `
-                    <div class="text-sm font-semibold">${block.label}</div>
-                    <div class="text-xs text-gray-500">${block.start} - ${block.end}</div>
-                `;
+                
+                if (block.isRoutine) {
+                    timeCell.innerHTML = `
+                        <div class="text-sm font-semibold">${block.label}</div>
+                        <div class="text-xs text-blue-600">Click links to open</div>
+                    `;
+                } else {
+                    timeCell.innerHTML = `
+                        <div class="text-sm font-semibold">${block.label}</div>
+                        <div class="text-xs text-gray-500">${block.start} - ${block.end}</div>
+                    `;
+                }
                 row.appendChild(timeCell);
 
                 // Day columns
                 for (let day = 0; day < 5; day++) {
                     const cell = document.createElement('td');
-                    cell.className = 'p-1 border-r border-gray-200 time-block relative';
+                    cell.className = 'p-1 border-r border-gray-200 time-block relative group';
+                    cell.dataset.blockIndex = index;
+                    cell.dataset.dayIndex = day;
                     
-                    const textarea = document.createElement('textarea');
-                    textarea.className = 'cell-input';
-                    textarea.placeholder = 'Click to add...';
-                    textarea.addEventListener('focus', () => {
-                        lastFocusedCell = textarea;
-                    });
-                    textarea.addEventListener('input', function() {
-                        this.style.height = 'auto';
-                        this.style.height = Math.max(100, this.scrollHeight) + 'px';
-                    });
+                    // Add copy button container
+                    const copyContainer = document.createElement('div');
+                    copyContainer.className = 'absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10';
+                    copyContainer.innerHTML = `
+                        <button onclick="copyCell(this)" class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg" title="Copy to other days">
+                            📋
+                        </button>
+                    `;
                     
-                    cell.appendChild(textarea);
+                    if (block.isRoutine) {
+                        // Create a special routine cell with clickable links
+                        const routineDiv = document.createElement('div');
+                        routineDiv.className = 'routine-cell p-2 min-h-[100px] bg-blue-50 rounded border border-blue-200';
+                        routineDiv.innerHTML = `
+                            <div class="text-xs text-blue-700 mb-2 font-medium">Morning Links & Notes:</div>
+                            <div class="routine-content text-sm"></div>
+                            <textarea class="routine-input w-full mt-2 p-2 text-xs border border-blue-300 rounded resize-none" 
+                                     rows="3" 
+                                     placeholder="Add links with titles:&#10;Morning notices: https://...&#10;Waiata - https://...&#10;Daily routine items"></textarea>
+                        `;
+                        
+                        const textarea = routineDiv.querySelector('.routine-input');
+                        const contentDiv = routineDiv.querySelector('.routine-content');
+                        
+                        textarea.addEventListener('input', function() {
+                            updateRoutineContent(this, contentDiv);
+                        });
+                        
+                        textarea.addEventListener('focus', () => {
+                            lastFocusedCell = textarea;
+                        });
+                        
+                        cell.appendChild(routineDiv);
+                    } else {
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'cell-input';
+                        textarea.placeholder = 'Click to add...';
+                        textarea.addEventListener('focus', () => {
+                            lastFocusedCell = textarea;
+                        });
+                        textarea.addEventListener('input', function() {
+                            this.style.height = 'auto';
+                            this.style.height = Math.max(100, this.scrollHeight) + 'px';
+                        });
+                        
+                        cell.appendChild(textarea);
+                    }
+                    
+                    // Add copy button to cell
+                    cell.appendChild(copyContainer);
+                    
                     row.appendChild(cell);
                 }
 
@@ -1061,10 +1117,258 @@
             alert('📄 To save as PDF:\n\n1. In the print dialog that opens, look for "Destination" or "Printer"\n2. Select "Save as PDF" or "Microsoft Print to PDF"\n3. Click "Save" and choose your location\n\n🖨️ The print dialog will open now...');
         }
 
+        // Store links for each routine cell
+        let routineLinks = {};
+
+        function updateRoutineContent(textarea, contentDiv) {
+            const cellId = textarea.closest('.routine-cell').dataset.cellId || Math.random().toString(36);
+            textarea.closest('.routine-cell').dataset.cellId = cellId;
+            
+            if (!routineLinks[cellId]) {
+                routineLinks[cellId] = [];
+            }
+            
+            const text = textarea.value;
+            const lines = text.split('\n');
+            let processedLines = [];
+            let linksToAdd = [];
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (line) {
+                    // Check if line contains a URL
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    if (urlRegex.test(line)) {
+                        // Check if line has format "Title: URL" or "Title - URL"
+                        const titleUrlMatch = line.match(/^(.+?)[\s]*[-:]\s*(https?:\/\/[^\s]+)$/);
+                        if (titleUrlMatch) {
+                            const title = titleUrlMatch[1].trim();
+                            const url = titleUrlMatch[2].trim();
+                            
+                            // Check if this link already exists
+                            const exists = routineLinks[cellId].some(link => link.url === url);
+                            if (!exists) {
+                                linksToAdd.push({ title, url });
+                            }
+                        } else {
+                            // Just URL without title - extract domain as title
+                            const urlMatch = line.match(urlRegex);
+                            if (urlMatch) {
+                                const url = urlMatch[0];
+                                try {
+                                    const domain = new URL(url).hostname.replace('www.', '');
+                                    const exists = routineLinks[cellId].some(link => link.url === url);
+                                    if (!exists) {
+                                        linksToAdd.push({ title: domain, url });
+                                    }
+                                } catch {
+                                    const exists = routineLinks[cellId].some(link => link.url === url);
+                                    if (!exists) {
+                                        linksToAdd.push({ title: 'Link', url });
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Regular text - keep it
+                        processedLines.push(line);
+                    }
+                }
+            });
+            
+            // Add new links to storage
+            linksToAdd.forEach(link => {
+                routineLinks[cellId].push(link);
+            });
+            
+            // Update textarea to remove processed URLs but keep other text
+            if (linksToAdd.length > 0) {
+                textarea.value = processedLines.join('\n');
+            }
+            
+            // Render all content
+            renderRoutineContent(cellId, contentDiv, processedLines);
+        }
+
+        function renderRoutineContent(cellId, contentDiv, textLines = []) {
+            let html = '';
+            
+            // Render links
+            if (routineLinks[cellId] && routineLinks[cellId].length > 0) {
+                routineLinks[cellId].forEach((link, index) => {
+                    html += `<div class="mb-1 flex items-center justify-between">
+                        <a href="${link.url}" target="_blank" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium bg-blue-50 px-2 py-1 rounded flex-1 mr-2">
+                            🔗 ${link.title}
+                        </a>
+                        <button onclick="removeRoutineLink('${cellId}', ${index})" class="text-red-500 hover:text-red-700 text-xs px-1 py-1 rounded hover:bg-red-50" title="Remove link">✕</button>
+                    </div>`;
+                });
+            }
+            
+            // Render regular text
+            textLines.forEach(line => {
+                if (line.trim()) {
+                    html += `<div class="mb-1 text-gray-700 text-sm">${line}</div>`;
+                }
+            });
+            
+            contentDiv.innerHTML = html || '<div class="text-gray-400 text-xs">Add links with titles:<br>Morning notices: https://...<br>Waiata - https://...<br>Or add regular notes</div>';
+        }
+
+        function removeRoutineLink(cellId, linkIndex) {
+            if (routineLinks[cellId] && routineLinks[cellId][linkIndex]) {
+                routineLinks[cellId].splice(linkIndex, 1);
+                
+                // Find the content div and re-render
+                const cell = document.querySelector(`[data-cell-id="${cellId}"]`);
+                if (cell) {
+                    const contentDiv = cell.querySelector('.routine-content');
+                    const textarea = cell.querySelector('.routine-input');
+                    const textLines = textarea.value.split('\n').filter(line => line.trim());
+                    renderRoutineContent(cellId, contentDiv, textLines);
+                }
+            }
+        }
+
+        function copyCell(button) {
+            const sourceCell = button.closest('td');
+            const blockIndex = parseInt(sourceCell.dataset.blockIndex);
+            const sourceDayIndex = parseInt(sourceCell.dataset.dayIndex);
+            
+            // Get the content to copy
+            let contentToCopy = '';
+            let linksToCopy = [];
+            let isRoutineCell = false;
+            
+            if (timeBlocks[blockIndex].isRoutine) {
+                // Handle routine cell
+                isRoutineCell = true;
+                const routineDiv = sourceCell.querySelector('.routine-cell');
+                const cellId = routineDiv.dataset.cellId;
+                const textarea = routineDiv.querySelector('.routine-input');
+                
+                contentToCopy = textarea.value;
+                if (cellId && routineLinks[cellId]) {
+                    linksToCopy = [...routineLinks[cellId]]; // Copy the links array
+                }
+            } else {
+                // Handle regular cell
+                const textarea = sourceCell.querySelector('.cell-input');
+                contentToCopy = textarea.value;
+            }
+            
+            if (!contentToCopy && linksToCopy.length === 0) {
+                alert('This cell is empty - nothing to copy!');
+                return;
+            }
+            
+            // Create day selection modal
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const dayOptions = days.map((day, index) => {
+                if (index === sourceDayIndex) return ''; // Don't show source day
+                return `<label class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+                    <input type="checkbox" value="${index}" class="day-checkbox">
+                    <span>${day}</span>
+                </label>`;
+            }).filter(option => option).join('');
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold mb-4">📋 Copy to Other Days</h3>
+                    <p class="text-sm text-gray-600 mb-4">Select which days to copy this content to:</p>
+                    <div class="space-y-1 mb-6">
+                        ${dayOptions}
+                    </div>
+                    <div class="flex gap-3 justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                        <button onclick="executeCopy()" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">Copy Content</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle the copy execution
+            window.executeCopy = function() {
+                const selectedDays = Array.from(modal.querySelectorAll('.day-checkbox:checked')).map(cb => parseInt(cb.value));
+                
+                if (selectedDays.length === 0) {
+                    alert('Please select at least one day to copy to.');
+                    return;
+                }
+                
+                // Find all cells in the same time block
+                const allCellsInBlock = document.querySelectorAll(`td[data-block-index="${blockIndex}"]`);
+                
+                selectedDays.forEach(dayIndex => {
+                    const targetCell = Array.from(allCellsInBlock).find(cell => 
+                        parseInt(cell.dataset.dayIndex) === dayIndex
+                    );
+                    
+                    if (targetCell) {
+                        if (isRoutineCell) {
+                            // Copy to routine cell
+                            const routineDiv = targetCell.querySelector('.routine-cell');
+                            const textarea = routineDiv.querySelector('.routine-input');
+                            const contentDiv = routineDiv.querySelector('.routine-content');
+                            
+                            // Set the text content
+                            textarea.value = contentToCopy;
+                            
+                            // Copy the links
+                            const targetCellId = routineDiv.dataset.cellId || Math.random().toString(36);
+                            routineDiv.dataset.cellId = targetCellId;
+                            
+                            if (!routineLinks[targetCellId]) {
+                                routineLinks[targetCellId] = [];
+                            }
+                            
+                            // Add links (avoiding duplicates)
+                            linksToCopy.forEach(link => {
+                                const exists = routineLinks[targetCellId].some(existingLink => existingLink.url === link.url);
+                                if (!exists) {
+                                    routineLinks[targetCellId].push({...link});
+                                }
+                            });
+                            
+                            // Re-render the content
+                            const textLines = contentToCopy.split('\n').filter(line => line.trim());
+                            renderRoutineContent(targetCellId, contentDiv, textLines);
+                            
+                        } else {
+                            // Copy to regular cell
+                            const textarea = targetCell.querySelector('.cell-input');
+                            textarea.value = contentToCopy;
+                            
+                            // Trigger resize
+                            textarea.style.height = 'auto';
+                            textarea.style.height = Math.max(100, textarea.scrollHeight) + 'px';
+                        }
+                    }
+                });
+                
+                modal.remove();
+                delete window.executeCopy; // Clean up
+                
+                const dayNames = selectedDays.map(i => days[i]).join(', ');
+                alert(`✅ Content copied to: ${dayNames}`);
+            };
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                    delete window.executeCopy;
+                }
+            });
+        }
+
         // Initialize the planner
         updateWeekDates();
         generatePlannerGrid();
         updateGroupButtons();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9758abb29358d9b0',t:'MTc1NjI2NzMxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9758f6144250d9ae',t:'MTc1NjI3MDM2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
