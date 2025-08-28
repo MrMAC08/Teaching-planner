@@ -406,7 +406,7 @@
     </div>
 
     <script>
-        let currentWeekStart = new Date(2024, 10, 25); // November 25, 2024 (Monday)
+        let currentWeekStart = new Date(2025, 7, 4); // August 4, 2025 (Monday)
         let timeBlocks = [
             { start: '', end: '', label: 'Morning Routine', isRoutine: true },
             { start: '9:00', end: '10:30', label: 'Block 1' },
@@ -421,6 +421,10 @@
         let customSubjects = [];
         let groupCount = 0;
         const maxGroups = 3;
+        
+        // Storage for week data - each week gets its own data
+        let weeklyData = JSON.parse(localStorage.getItem('weeklyPlannerData') || '{}');
+        let globalRoutineData = JSON.parse(localStorage.getItem('globalRoutineData') || '{}');
 
         function updateWeekDates() {
             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -445,8 +449,117 @@
         }
 
         function changeWeek(direction) {
+            // Save current week data before changing
+            saveCurrentWeekData();
+            
+            // Change to new week
             currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
             updateWeekDates();
+            
+            // Load data for the new week
+            loadWeekData();
+        }
+        
+        function getWeekKey() {
+            // Create a unique key for the current week (YYYY-MM-DD format for Monday)
+            const year = currentWeekStart.getFullYear();
+            const month = String(currentWeekStart.getMonth() + 1).padStart(2, '0');
+            const day = String(currentWeekStart.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function saveCurrentWeekData() {
+            const weekKey = getWeekKey();
+            const weekData = {
+                cells: {},
+                routines: {}
+            };
+            
+            // Save regular cell data
+            const cells = document.querySelectorAll('.cell-input');
+            cells.forEach((cell, index) => {
+                if (cell.value.trim()) {
+                    const blockIndex = cell.closest('td').dataset.blockIndex;
+                    const dayIndex = cell.closest('td').dataset.dayIndex;
+                    weekData.cells[`${blockIndex}-${dayIndex}`] = cell.value;
+                }
+            });
+            
+            // Save routine data separately (these will be shared across weeks)
+            const routineCells = document.querySelectorAll('.routine-cell');
+            routineCells.forEach((routineDiv) => {
+                const dayIndex = routineDiv.closest('td').dataset.dayIndex;
+                const cellId = routineDiv.dataset.cellId;
+                
+                if (cellId && routineLinks[cellId] && routineLinks[cellId].length > 0) {
+                    globalRoutineData[dayIndex] = {
+                        text: '',
+                        links: [...routineLinks[cellId]]
+                    };
+                }
+            });
+            
+            // Store the data
+            weeklyData[weekKey] = weekData;
+            localStorage.setItem('weeklyPlannerData', JSON.stringify(weeklyData));
+            localStorage.setItem('globalRoutineData', JSON.stringify(globalRoutineData));
+        }
+        
+        function loadWeekData() {
+            const weekKey = getWeekKey();
+            const weekData = weeklyData[weekKey];
+            
+            // Clear all regular cells first
+            const cells = document.querySelectorAll('.cell-input');
+            cells.forEach(cell => {
+                cell.value = '';
+                cell.style.height = 'auto';
+                cell.style.height = '100px';
+            });
+            
+            // Load regular cell data for this specific week
+            if (weekData && weekData.cells) {
+                Object.keys(weekData.cells).forEach(cellKey => {
+                    const [blockIndex, dayIndex] = cellKey.split('-');
+                    const cell = document.querySelector(`td[data-block-index="${blockIndex}"][data-day-index="${dayIndex}"] .cell-input`);
+                    if (cell) {
+                        cell.value = weekData.cells[cellKey];
+                        cell.style.height = 'auto';
+                        cell.style.height = Math.max(100, cell.scrollHeight) + 'px';
+                    }
+                });
+            }
+            
+            // Load routine data (shared across all weeks)
+            const routineCells = document.querySelectorAll('.routine-cell');
+            routineCells.forEach((routineDiv) => {
+                const dayIndex = routineDiv.closest('td').dataset.dayIndex;
+                const contentDiv = routineDiv.querySelector('.routine-content');
+                
+                if (globalRoutineData[dayIndex]) {
+                    const routineData = globalRoutineData[dayIndex];
+                    
+                    // Restore links
+                    const cellId = routineDiv.dataset.cellId || Math.random().toString(36);
+                    routineDiv.dataset.cellId = cellId;
+                    
+                    if (routineData.links && routineData.links.length > 0) {
+                        routineLinks[cellId] = [...routineData.links];
+                    } else {
+                        routineLinks[cellId] = [];
+                    }
+                    
+                    // Re-render routine content
+                    renderRoutineContent(cellId, contentDiv, []);
+                } else {
+                    // Clear routine cell
+                    const cellId = routineDiv.dataset.cellId;
+                    if (cellId) {
+                        routineLinks[cellId] = [];
+                    }
+                    renderRoutineContent(cellId || '', contentDiv, []);
+                }
+            });
         }
 
         function generatePlannerGrid() {
@@ -493,25 +606,15 @@
                     if (block.isRoutine) {
                         // Create a special routine cell with clickable links
                         const routineDiv = document.createElement('div');
-                        routineDiv.className = 'routine-cell p-2 min-h-[100px] bg-blue-50 rounded border border-blue-200';
+                        routineDiv.className = 'routine-cell p-1 min-h-[80px] bg-blue-50 rounded border border-blue-200';
                         routineDiv.innerHTML = `
-                            <div class="text-xs text-blue-700 mb-2 font-medium">Morning Links & Notes:</div>
-                            <div class="routine-content text-sm"></div>
-                            <textarea class="routine-input w-full mt-2 p-2 text-xs border border-blue-300 rounded resize-none" 
-                                     rows="3" 
-                                     placeholder="Add links with titles:&#10;Morning notices: https://...&#10;Waiata - https://...&#10;Daily routine items"></textarea>
+                            <div class="routine-content text-xs mb-1"></div>
+                            <button class="add-link-btn w-full p-2 text-xs border border-blue-300 rounded bg-white hover:bg-blue-50 text-blue-600 font-medium" onclick="openLinkPopup(this)">
+                                + Add Link
+                            </button>
                         `;
                         
-                        const textarea = routineDiv.querySelector('.routine-input');
                         const contentDiv = routineDiv.querySelector('.routine-content');
-                        
-                        textarea.addEventListener('input', function() {
-                            updateRoutineContent(this, contentDiv);
-                        });
-                        
-                        textarea.addEventListener('focus', () => {
-                            lastFocusedCell = textarea;
-                        });
                         
                         cell.appendChild(routineDiv);
                     } else {
@@ -524,6 +627,9 @@
                         textarea.addEventListener('input', function() {
                             this.style.height = 'auto';
                             this.style.height = Math.max(100, this.scrollHeight) + 'px';
+                            // Auto-save when content changes
+                            clearTimeout(window.autoSaveTimeout);
+                            window.autoSaveTimeout = setTimeout(saveCurrentWeekData, 1000);
                         });
                         
                         cell.appendChild(textarea);
@@ -1180,74 +1286,105 @@
         // Store links for each routine cell
         let routineLinks = {};
 
-        function updateRoutineContent(textarea, contentDiv) {
-            const cellId = textarea.closest('.routine-cell').dataset.cellId || Math.random().toString(36);
-            textarea.closest('.routine-cell').dataset.cellId = cellId;
+
+
+        function openLinkPopup(button) {
+            const routineCell = button.closest('.routine-cell');
+            const cellId = routineCell.dataset.cellId || Math.random().toString(36);
+            routineCell.dataset.cellId = cellId;
             
             if (!routineLinks[cellId]) {
                 routineLinks[cellId] = [];
             }
             
-            const text = textarea.value;
-            const lines = text.split('\n');
-            let processedLines = [];
-            let linksToAdd = [];
+            // Create popup modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold mb-4">🔗 Add Morning Routine Link</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Link Title:</label>
+                            <input type="text" id="popupLinkTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., Morning Notices, Waiata">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">URL:</label>
+                            <input type="url" id="popupLinkUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 justify-end mt-6">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                        <button onclick="addRoutineLink('${cellId}')" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">Add Link</button>
+                    </div>
+                </div>
+            `;
             
-            lines.forEach(line => {
-                line = line.trim();
-                if (line) {
-                    // Check if line contains a URL
-                    const urlRegex = /(https?:\/\/[^\s]+)/g;
-                    if (urlRegex.test(line)) {
-                        // Check if line has format "Title: URL" or "Title - URL"
-                        const titleUrlMatch = line.match(/^(.+?)[\s]*[-:]\s*(https?:\/\/[^\s]+)$/);
-                        if (titleUrlMatch) {
-                            const title = titleUrlMatch[1].trim();
-                            const url = titleUrlMatch[2].trim();
-                            
-                            // Check if this link already exists
-                            const exists = routineLinks[cellId].some(link => link.url === url);
-                            if (!exists) {
-                                linksToAdd.push({ title, url });
-                            }
-                        } else {
-                            // Just URL without title - extract domain as title
-                            const urlMatch = line.match(urlRegex);
-                            if (urlMatch) {
-                                const url = urlMatch[0];
-                                try {
-                                    const domain = new URL(url).hostname.replace('www.', '');
-                                    const exists = routineLinks[cellId].some(link => link.url === url);
-                                    if (!exists) {
-                                        linksToAdd.push({ title: domain, url });
-                                    }
-                                } catch {
-                                    const exists = routineLinks[cellId].some(link => link.url === url);
-                                    if (!exists) {
-                                        linksToAdd.push({ title: 'Link', url });
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Regular text - keep it
-                        processedLines.push(line);
-                    }
+            document.body.appendChild(modal);
+            
+            // Focus on title input
+            setTimeout(() => {
+                document.getElementById('popupLinkTitle').focus();
+            }, 100);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
                 }
             });
             
-            // Add new links to storage
-            linksToAdd.forEach(link => {
-                routineLinks[cellId].push(link);
+            // Handle Enter key
+            modal.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    addRoutineLink(cellId);
+                }
             });
+        }
+        
+        function addRoutineLink(cellId) {
+            const title = document.getElementById('popupLinkTitle').value.trim();
+            const url = document.getElementById('popupLinkUrl').value.trim();
             
-            // Update textarea to remove processed URLs but keep other text
-            if (linksToAdd.length > 0) {
-                textarea.value = processedLines.join('\n');
+            if (!title || !url) {
+                alert('Please enter both a title and URL for the link.');
+                return;
             }
             
-            // Render all content
-            renderRoutineContent(cellId, contentDiv, processedLines);
+            // Auto-add https:// if no protocol is specified
+            let finalUrl = url;
+            if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                finalUrl = 'https://' + finalUrl;
+            }
+            
+            // Add link to storage
+            if (!routineLinks[cellId]) {
+                routineLinks[cellId] = [];
+            }
+            
+            // Check for duplicates
+            const exists = routineLinks[cellId].some(link => link.url === finalUrl);
+            if (!exists) {
+                routineLinks[cellId].push({ title, url: finalUrl });
+            }
+            
+            // Find the routine cell and re-render
+            const routineCell = document.querySelector(`[data-cell-id="${cellId}"]`);
+            if (routineCell) {
+                const contentDiv = routineCell.querySelector('.routine-content');
+                renderRoutineContent(cellId, contentDiv, []);
+                
+                // Auto-save routine data
+                const dayIndex = routineCell.closest('td').dataset.dayIndex;
+                globalRoutineData[dayIndex] = {
+                    text: '',
+                    links: [...routineLinks[cellId]]
+                };
+                localStorage.setItem('globalRoutineData', JSON.stringify(globalRoutineData));
+            }
+            
+            // Close modal
+            document.querySelector('.fixed').remove();
         }
 
         function renderRoutineContent(cellId, contentDiv, textLines = []) {
@@ -1265,14 +1402,7 @@
                 });
             }
             
-            // Render regular text
-            textLines.forEach(line => {
-                if (line.trim()) {
-                    html += `<div class="mb-1 text-gray-700 text-sm">${line}</div>`;
-                }
-            });
-            
-            contentDiv.innerHTML = html || '<div class="text-gray-400 text-xs">Add links with titles:<br>Morning notices: https://...<br>Waiata - https://...<br>Or add regular notes</div>';
+            contentDiv.innerHTML = html || '';
         }
 
         function removeRoutineLink(cellId, linkIndex) {
@@ -1305,9 +1435,8 @@
                 isRoutineCell = true;
                 const routineDiv = sourceCell.querySelector('.routine-cell');
                 const cellId = routineDiv.dataset.cellId;
-                const textarea = routineDiv.querySelector('.routine-input');
                 
-                contentToCopy = textarea.value;
+                contentToCopy = '';
                 if (cellId && routineLinks[cellId]) {
                     linksToCopy = [...routineLinks[cellId]]; // Copy the links array
                 }
@@ -1371,11 +1500,7 @@
                         if (isRoutineCell) {
                             // Copy to routine cell
                             const routineDiv = targetCell.querySelector('.routine-cell');
-                            const textarea = routineDiv.querySelector('.routine-input');
                             const contentDiv = routineDiv.querySelector('.routine-content');
-                            
-                            // Set the text content
-                            textarea.value = contentToCopy;
                             
                             // Copy the links
                             const targetCellId = routineDiv.dataset.cellId || Math.random().toString(36);
@@ -1394,8 +1519,7 @@
                             });
                             
                             // Re-render the content
-                            const textLines = contentToCopy.split('\n').filter(line => line.trim());
-                            renderRoutineContent(targetCellId, contentDiv, textLines);
+                            renderRoutineContent(targetCellId, contentDiv, []);
                             
                         } else {
                             // Copy to regular cell
@@ -1671,6 +1795,11 @@
         generatePlannerGrid();
         updateGroupButtons();
         renderLinks();
+        
+        // Load data for the current week after grid is generated
+        setTimeout(() => {
+            loadWeekData();
+        }, 100);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975eb3fd23f9d9a8',t:'MTc1NjMzMDU3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975feb9df7cbd998',t:'MTc1NjM0MzMzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
