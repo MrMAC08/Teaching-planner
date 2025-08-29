@@ -196,6 +196,20 @@
                 <div id="subjectsTab" class="tab-content" style="display: none;">
                     <h1 class="text-3xl font-bold text-gray-800 mb-6">Subject Planning</h1>
                     
+                    <!-- Week Navigation for Subject Planning -->
+                    <div class="flex items-center justify-between mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <button onclick="changeWeek(-1)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            ← Previous Week
+                        </button>
+                        <div class="text-center">
+                            <h2 id="subjectWeekTitle" class="text-xl font-semibold text-gray-700"></h2>
+                            <p class="text-sm text-gray-600">Planning for <span id="currentSubjectDisplay" class="font-medium text-blue-600">Maths</span></p>
+                        </div>
+                        <button onclick="changeWeek(1)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            Next Week →
+                        </button>
+                    </div>
+                    
                     <!-- Subject Selection -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-3">Select Subject:</label>
@@ -215,11 +229,11 @@
                     <div class="grid md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">WALT (We Are Learning To):</label>
-                            <textarea id="waltInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter learning objectives..."></textarea>
+                            <textarea id="waltInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter learning objectives..." oninput="autoSaveSubjectData()"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Success Criteria:</label>
-                            <textarea id="successInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter success criteria..."></textarea>
+                            <textarea id="successInput" class="w-full h-20 px-2 py-1 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Enter success criteria..." oninput="autoSaveSubjectData()"></textarea>
                         </div>
                     </div>
 
@@ -254,27 +268,27 @@
                                 <tbody id="planningTableBody">
                                     <tr class="border-b border-gray-300">
                                         <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Warm up/Review Activities</td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
-                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter warm up activities..." oninput="autoSaveSubjectData()"></textarea></td>
                                     </tr>
                                     <tr class="border-b border-gray-300">
                                         <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Whole Class Teaching</td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
-                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter whole class teaching..." oninput="autoSaveSubjectData()"></textarea></td>
                                     </tr>
                                     <tr class="border-b border-gray-300">
                                         <td class="p-3 bg-gray-50 border-r border-gray-300 font-medium">Tasks (Whole Class/Groups)</td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
-                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
-                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..."></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1 border-r border-gray-300"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..." oninput="autoSaveSubjectData()"></textarea></td>
+                                        <td class="p-1"><textarea class="w-full h-32 p-2 border-none resize-none" placeholder="Enter tasks and group work..." oninput="autoSaveSubjectData()"></textarea></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -451,11 +465,24 @@
                     `${dayName}\n${dayNum} ${monthName}`;
             }
 
-            // Update week title
+            // Update week titles
             const endDate = new Date(currentWeekStart);
             endDate.setDate(currentWeekStart.getDate() + 4);
-            document.getElementById('weekTitle').textContent = 
-                `Week of ${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} - ${endDate.getDate()} ${months[endDate.getMonth()]} ${currentWeekStart.getFullYear()}`;
+            const weekTitleText = `Week of ${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} - ${endDate.getDate()} ${months[endDate.getMonth()]} ${currentWeekStart.getFullYear()}`;
+            
+            document.getElementById('weekTitle').textContent = weekTitleText;
+            
+            // Update subject planning week title
+            const subjectWeekTitle = document.getElementById('subjectWeekTitle');
+            if (subjectWeekTitle) {
+                subjectWeekTitle.textContent = weekTitleText;
+            }
+            
+            // Update current subject display
+            const currentSubjectDisplay = document.getElementById('currentSubjectDisplay');
+            if (currentSubjectDisplay) {
+                currentSubjectDisplay.textContent = currentSubject;
+            }
         }
 
         function changeWeek(direction) {
@@ -482,7 +509,8 @@
             const weekKey = getWeekKey();
             const weekData = {
                 cells: {},
-                routines: {}
+                routines: {},
+                subjects: {}
             };
             
             // Save regular cell data
@@ -508,6 +536,58 @@
                     };
                 }
             });
+            
+            // Save subject planning data for current subject and week
+            const subjectData = {
+                walt: document.getElementById('waltInput').value,
+                success: document.getElementById('successInput').value,
+                links: [],
+                activities: {},
+                groups: []
+            };
+            
+            // Save resource links
+            const linkElements = document.querySelectorAll('#linksContainer .bg-blue-50');
+            linkElements.forEach(linkDiv => {
+                const linkElement = linkDiv.querySelector('a');
+                if (linkElement) {
+                    subjectData.links.push({
+                        title: linkElement.textContent,
+                        url: linkElement.href
+                    });
+                }
+            });
+            
+            // Save planning activities
+            const planningTextareas = document.querySelectorAll('#subjectsTab table tbody textarea');
+            planningTextareas.forEach((textarea, index) => {
+                if (textarea.value.trim()) {
+                    subjectData.activities[index] = textarea.value;
+                }
+            });
+            
+            // Save group data
+            for (let g = 1; g <= groupCount; g++) {
+                const groupRow = document.getElementById(`group-${g}`);
+                if (groupRow) {
+                    const groupName = groupRow.querySelector('input').value;
+                    const groupTextareas = groupRow.querySelectorAll('textarea');
+                    const groupActivities = {};
+                    groupTextareas.forEach((textarea, index) => {
+                        if (textarea.value.trim()) {
+                            groupActivities[index] = textarea.value;
+                        }
+                    });
+                    subjectData.groups.push({
+                        name: groupName,
+                        activities: groupActivities
+                    });
+                }
+            }
+            
+            // Store subject data with week and subject key
+            if (!weekData.subjects) weekData.subjects = {};
+            weekData.subjects[currentSubject] = subjectData;
             
             // Store the data
             weeklyData[weekKey] = weekData;
@@ -570,6 +650,9 @@
                     renderRoutineContent(cellId || '', contentDiv, []);
                 }
             });
+            
+            // Load subject planning data for current subject and week
+            loadSubjectData();
         }
 
         function generatePlannerGrid() {
@@ -739,7 +822,103 @@
                 tab === 'links' ? 'flex-1 px-6 py-4 font-semibold text-lg tab-active transition-all' : 'flex-1 px-6 py-4 font-semibold text-lg tab-inactive transition-all';
         }
 
+        function loadSubjectData() {
+            const weekKey = getWeekKey();
+            const weekData = weeklyData[weekKey];
+            
+            // Clear all subject planning fields first
+            document.getElementById('waltInput').value = '';
+            document.getElementById('successInput').value = '';
+            
+            // Clear resource links
+            const linksContainer = document.getElementById('linksContainer');
+            const existingLinks = linksContainer.querySelectorAll('.bg-blue-50');
+            existingLinks.forEach(link => link.remove());
+            
+            // Clear planning activities
+            const planningTextareas = document.querySelectorAll('#subjectsTab table tbody textarea');
+            planningTextareas.forEach(textarea => {
+                textarea.value = '';
+            });
+            
+            // Clear groups
+            while (groupCount > 0) {
+                removeGroup();
+            }
+            
+            // Update current subject display
+            const currentSubjectDisplay = document.getElementById('currentSubjectDisplay');
+            if (currentSubjectDisplay) {
+                currentSubjectDisplay.textContent = currentSubject;
+            }
+            
+            // Load subject data if it exists for this week and subject
+            if (weekData && weekData.subjects && weekData.subjects[currentSubject]) {
+                const subjectData = weekData.subjects[currentSubject];
+                
+                // Load WALT and Success Criteria
+                document.getElementById('waltInput').value = subjectData.walt || '';
+                document.getElementById('successInput').value = subjectData.success || '';
+                
+                // Load resource links
+                if (subjectData.links && subjectData.links.length > 0) {
+                    subjectData.links.forEach(link => {
+                        const linkDiv = document.createElement('div');
+                        linkDiv.className = 'flex items-center justify-between bg-blue-50 p-3 rounded-lg mb-2 border border-blue-200';
+                        linkDiv.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <span class="text-blue-600">🔗</span>
+                                <a href="${link.url}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">${link.title}</a>
+                                <span class="text-xs text-gray-500">(${link.url})</span>
+                            </div>
+                            <button onclick="this.parentElement.remove(); autoSaveSubjectData();" class="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50">✕ Remove</button>
+                        `;
+                        
+                        const inputRow = linksContainer.querySelector('.flex.gap-2');
+                        linksContainer.insertBefore(linkDiv, inputRow);
+                    });
+                }
+                
+                // Load planning activities
+                if (subjectData.activities) {
+                    Object.keys(subjectData.activities).forEach(index => {
+                        const textarea = planningTextareas[parseInt(index)];
+                        if (textarea) {
+                            textarea.value = subjectData.activities[index];
+                        }
+                    });
+                }
+                
+                // Load groups
+                if (subjectData.groups && subjectData.groups.length > 0) {
+                    subjectData.groups.forEach(groupData => {
+                        addGroup();
+                        const groupRow = document.getElementById(`group-${groupCount}`);
+                        if (groupRow) {
+                            // Set group name
+                            const nameInput = groupRow.querySelector('input');
+                            nameInput.value = groupData.name;
+                            
+                            // Set group activities
+                            const groupTextareas = groupRow.querySelectorAll('textarea');
+                            Object.keys(groupData.activities).forEach(index => {
+                                const textarea = groupTextareas[parseInt(index)];
+                                if (textarea) {
+                                    textarea.value = groupData.activities[index];
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
         function setSubjectPlan(subject) {
+            // Save current subject data before switching
+            if (currentSubject !== subject) {
+                saveCurrentWeekData();
+            }
+            
             currentSubject = subject;
             
             // Update button styles
@@ -752,6 +931,9 @@
             if (btn) {
                 btn.className += ' ring-2 ring-offset-2 ring-gray-400';
             }
+            
+            // Load data for the new subject
+            loadSubjectData();
         }
 
         function addCustomSubject() {
@@ -797,7 +979,7 @@
                         <a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">${titleInput.value}</a>
                         <span class="text-xs text-gray-500">(${url})</span>
                     </div>
-                    <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50">✕ Remove</button>
+                    <button onclick="this.parentElement.remove(); autoSaveSubjectData();" class="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50">✕ Remove</button>
                 `;
                 
                 // Insert before the input row
@@ -806,6 +988,9 @@
                 // Clear inputs
                 titleInput.value = '';
                 urlInput.value = '';
+                
+                // Auto-save the new link
+                autoSaveSubjectData();
             } else {
                 alert('Please enter both a title and URL for the link.');
             }
@@ -830,13 +1015,13 @@
             
             newRow.innerHTML = `
                 <td class="p-3 ${colorClass} border-r border-gray-300 font-medium">
-                    <input type="text" value="${groupName}" class="bg-transparent border-none font-medium text-sm w-full" onchange="updateGroupName(${groupCount}, this.value)">
+                    <input type="text" value="${groupName}" class="bg-transparent border-none font-medium text-sm w-full" onchange="updateGroupName(${groupCount}, this.value); autoSaveSubjectData();" oninput="autoSaveSubjectData()">
                 </td>
-                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
-                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
-                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
-                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
-                <td class="p-1"><textarea class="group-input" placeholder="Enter ${groupName} activities..."></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                <td class="p-1 border-r border-gray-300"><textarea class="group-input" placeholder="Enter ${groupName} activities..." oninput="autoSaveSubjectData()"></textarea></td>
+                <td class="p-1"><textarea class="group-input" placeholder="Enter ${groupName} activities..." oninput="autoSaveSubjectData()"></textarea></td>
             `;
             
             tbody.appendChild(newRow);
@@ -1800,6 +1985,12 @@
             input.value = ''; // Clear the input
         }
 
+        // Auto-save function for subject data
+        function autoSaveSubjectData() {
+            clearTimeout(window.subjectAutoSaveTimeout);
+            window.subjectAutoSaveTimeout = setTimeout(saveCurrentWeekData, 1000);
+        }
+
         // Initialize the planner
         updateWeekDates();
         generatePlannerGrid();
@@ -1811,5 +2002,5 @@
             loadWeekData();
         }, 100);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9760801dc6f9d9af',t:'MTc1NjM0OTQxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9768db0ba529d9bb',t:'MTc1NjQzNzAzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
