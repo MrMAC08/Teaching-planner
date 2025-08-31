@@ -18,6 +18,11 @@
             min-height: 100px;
             overflow: hidden;
         }
+        .break-cell {
+            min-height: 50px;
+            font-size: 12px;
+            padding: 4px;
+        }
         .cell-input:focus {
             background: rgba(59, 130, 246, 0.1);
             border-radius: 4px;
@@ -714,6 +719,32 @@
                         const contentDiv = routineDiv.querySelector('.routine-content');
                         
                         cell.appendChild(routineDiv);
+                    } else if (block.label === 'Break' || block.label === 'Lunch') {
+                        // Create smaller break cell with colored background
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'cell-input break-cell';
+                        textarea.placeholder = 'Break notes...';
+                        textarea.addEventListener('focus', () => {
+                            lastFocusedCell = textarea;
+                        });
+                        textarea.addEventListener('input', function() {
+                            this.style.height = 'auto';
+                            this.style.height = Math.max(50, this.scrollHeight) + 'px';
+                            // Auto-save when content changes
+                            clearTimeout(window.autoSaveTimeout);
+                            window.autoSaveTimeout = setTimeout(saveCurrentWeekData, 1000);
+                        });
+                        
+                        // Add colored background to the cell and make it smaller
+                        if (block.label === 'Break') {
+                            cell.classList.add('bg-orange-100');
+                            cell.style.height = '60px';
+                        } else if (block.label === 'Lunch') {
+                            cell.classList.add('bg-green-100');
+                            cell.style.height = '60px';
+                        }
+                        
+                        cell.appendChild(textarea);
                     } else {
                         const textarea = document.createElement('textarea');
                         textarea.className = 'cell-input';
@@ -1945,5 +1976,5 @@
             loadWeekData();
         }, 100);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'977bb4ceb289d9b7',t:'MTc1NjYzNDY5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'977f13bd65f050a4',t:'MTc1NjY3MDAzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
