@@ -210,19 +210,18 @@
                         </button>
                     </div>
                     
-                    <!-- Subject Selection -->
+                    <!-- Subject Selection - SIMPLIFIED VERSION -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-3">Select Subject:</label>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <button onclick="setSubjectPlan('Maths')" id="mathsPlanBtn" class="px-4 py-2 rounded-lg bg-yellow-500 text-white font-medium ring-2 ring-offset-2 ring-gray-400">Maths</button>
-                            <button onclick="setSubjectPlan('Writing')" id="writingPlanBtn" class="px-4 py-2 rounded-lg bg-purple-500 text-white font-medium">Writing</button>
-                            <button onclick="setSubjectPlan('Reading')" id="readingPlanBtn" class="px-4 py-2 rounded-lg bg-blue-500 text-white font-medium">Reading</button>
-                            <button onclick="setSubjectPlan('The Code')" id="codePlanBtn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-medium">The Code</button>
+                        <div class="flex flex-wrap gap-2 mb-4" id="subjectButtonsContainer">
+                            <!-- Subject buttons will be rendered by JavaScript -->
                         </div>
                         <div class="flex gap-2">
                             <input type="text" id="customSubject" placeholder="Add custom subject..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
                             <button onclick="addCustomSubject()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Add Subject</button>
                         </div>
+                        
+
                     </div>
 
                     <!-- WALT and Success Criteria -->
@@ -248,8 +247,6 @@
                             </div>
                         </div>
                     </div>
-
-
 
                     <!-- Subject Planner Grid -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -325,8 +322,6 @@
                                 </button>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
 
@@ -442,13 +437,22 @@
         let lastFocusedCell = null;
         let currentView = 'week';
         let currentSubject = 'Maths';
-        let customSubjects = [];
+        let customSubjects = JSON.parse(localStorage.getItem('customSubjects') || '[]');
         let groupCount = 0;
         const maxGroups = 3;
         
         // Storage for week data - each week gets its own data
         let weeklyData = JSON.parse(localStorage.getItem('weeklyPlannerData') || '{}');
         let globalRoutineData = JSON.parse(localStorage.getItem('globalRoutineData') || '{}');
+
+        // SIMPLIFIED SUBJECT MANAGEMENT - NO MORE DELETE FUNCTION
+        const DEFAULT_SUBJECTS = ['Maths', 'Writing', 'Reading', 'The Code'];
+        
+        function getAllSubjects() {
+            return [...DEFAULT_SUBJECTS, ...customSubjects];
+        }
+        
+
 
         function updateWeekDates() {
             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -913,6 +917,24 @@
             }
         }
 
+        // Subject color mapping
+        const subjectColors = {
+            'Maths': { bg: 'bg-yellow-500', header: 'from-yellow-600 to-orange-600', text: 'text-yellow-800' },
+            'Writing': { bg: 'bg-purple-500', header: 'from-purple-600 to-indigo-600', text: 'text-purple-800' },
+            'Reading': { bg: 'bg-blue-500', header: 'from-blue-600 to-indigo-600', text: 'text-blue-800' },
+            'The Code': { bg: 'bg-green-500', header: 'from-green-600 to-teal-600', text: 'text-green-800' }
+        };
+        
+        // Additional colors for custom subjects
+        const additionalColors = [
+            { bg: 'bg-pink-500', header: 'from-pink-600 to-rose-600', text: 'text-pink-800' },
+            { bg: 'bg-cyan-500', header: 'from-cyan-600 to-blue-600', text: 'text-cyan-800' },
+            { bg: 'bg-orange-500', header: 'from-orange-600 to-red-600', text: 'text-orange-800' },
+            { bg: 'bg-emerald-500', header: 'from-emerald-600 to-green-600', text: 'text-emerald-800' },
+            { bg: 'bg-violet-500', header: 'from-violet-600 to-purple-600', text: 'text-violet-800' },
+            { bg: 'bg-teal-500', header: 'from-teal-600 to-cyan-600', text: 'text-teal-800' }
+        ];
+
         function setSubjectPlan(subject) {
             // Save current subject data before switching
             if (currentSubject !== subject) {
@@ -932,29 +954,80 @@
                 btn.className += ' ring-2 ring-offset-2 ring-gray-400';
             }
             
+            // Update table header color based on subject
+            updatePlanningTableHeader(subject);
+            
             // Load data for the new subject
             loadSubjectData();
+        }
+        
+        function updatePlanningTableHeader(subject) {
+            const tableHeader = document.querySelector('#planningTable thead tr');
+            if (tableHeader) {
+                // Get color for this subject
+                let colors = subjectColors[subject];
+                if (!colors) {
+                    // For custom subjects, assign a color from additional colors
+                    const customIndex = customSubjects.indexOf(subject);
+                    if (customIndex >= 0 && customIndex < additionalColors.length) {
+                        colors = additionalColors[customIndex];
+                    } else {
+                        // Fallback to gray
+                        colors = { bg: 'bg-gray-500', header: 'from-gray-600 to-slate-600', text: 'text-gray-800' };
+                    }
+                }
+                
+                // Update header gradient
+                tableHeader.className = `bg-gradient-to-r ${colors.header} text-white`;
+            }
         }
 
         function addCustomSubject() {
             const input = document.getElementById('customSubject');
             const subject = input.value.trim();
             
-            if (subject && !customSubjects.includes(subject)) {
+            if (subject && !customSubjects.includes(subject) && !DEFAULT_SUBJECTS.includes(subject)) {
                 customSubjects.push(subject);
+                localStorage.setItem('customSubjects', JSON.stringify(customSubjects));
                 
-                // Add button
-                const container = input.parentElement.previousElementSibling;
-                const button = document.createElement('button');
-                button.textContent = subject;
-                button.className = 'px-4 py-2 rounded-lg bg-gray-500 text-white font-medium';
-                button.onclick = () => setSubjectPlan(subject);
-                button.id = subject.toLowerCase().replace(/\s+/g, '') + 'PlanBtn';
-                container.appendChild(button);
+                // Re-render subject buttons
+                renderSubjectButtons();
                 
                 input.value = '';
                 setSubjectPlan(subject);
+            } else if (DEFAULT_SUBJECTS.includes(subject) || customSubjects.includes(subject)) {
+                alert('This subject already exists!');
             }
+        }
+
+        function renderSubjectButtons() {
+            const container = document.getElementById('subjectButtonsContainer');
+            container.innerHTML = '';
+            
+            // Render default subjects
+            DEFAULT_SUBJECTS.forEach(subject => {
+                const colors = subjectColors[subject];
+                const isActive = subject === currentSubject;
+                const button = document.createElement('button');
+                button.onclick = () => setSubjectPlan(subject);
+                button.id = subject.toLowerCase().replace(/\s+/g, '').replace('the', '') + 'PlanBtn';
+                button.className = `px-4 py-2 rounded-lg ${colors.bg} text-white font-medium${isActive ? ' ring-2 ring-offset-2 ring-gray-400' : ''}`;
+                button.textContent = subject;
+                container.appendChild(button);
+            });
+            
+            // Render custom subjects (no delete option)
+            customSubjects.forEach((subject, index) => {
+                const colors = additionalColors[index] || { bg: 'bg-gray-500', header: 'from-gray-600 to-slate-600', text: 'text-gray-800' };
+                const isActive = subject === currentSubject;
+                
+                const button = document.createElement('button');
+                button.onclick = () => setSubjectPlan(subject);
+                button.id = subject.toLowerCase().replace(/\s+/g, '') + 'PlanBtn';
+                button.className = `px-4 py-2 rounded-lg ${colors.bg} text-white font-medium${isActive ? ' ring-2 ring-offset-2 ring-gray-400' : ''}`;
+                button.textContent = subject;
+                container.appendChild(button);
+            });
         }
 
         function addLink(button) {
@@ -1066,138 +1139,6 @@
                 textareas.forEach(textarea => {
                     textarea.placeholder = `Enter ${newName} activities...`;
                 });
-            }
-        }
-
-        function copyForGoogleDocs() {
-            try {
-                // Get all the data
-                const walt = document.getElementById('waltInput').value || '';
-                const success = document.getElementById('successInput').value || '';
-                
-                // Get links
-                const links = [];
-                document.querySelectorAll('#linksContainer a').forEach(link => {
-                    links.push({ title: link.textContent, url: link.href });
-                });
-                
-                // Get planning data from textareas
-                const planningTextareas = document.querySelectorAll('#subjectsTab table tbody textarea');
-                const activities = {
-                    warmup: [],
-                    teaching: [],
-                    tasks: [],
-                    groups: []
-                };
-                
-                // Get main activities (first 15 textareas)
-                for (let i = 0; i < 5; i++) {
-                    activities.warmup.push(planningTextareas[i]?.value || '');
-                }
-                for (let i = 5; i < 10; i++) {
-                    activities.teaching.push(planningTextareas[i]?.value || '');
-                }
-                for (let i = 10; i < 15; i++) {
-                    activities.tasks.push(planningTextareas[i]?.value || '');
-                }
-                
-                // Get group activities
-                for (let g = 1; g <= groupCount; g++) {
-                    const groupRow = document.getElementById(`group-${g}`);
-                    if (groupRow) {
-                        const groupName = groupRow.querySelector('input').value;
-                        const groupTextareas = groupRow.querySelectorAll('textarea');
-                        const groupActivities = [];
-                        groupTextareas.forEach(textarea => {
-                            groupActivities.push(textarea.value || '');
-                        });
-                        activities.groups.push({ name: groupName, activities: groupActivities });
-                    }
-                }
-                
-                // Get week date
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const weekStart = `${currentWeekStart.getDate()} ${months[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
-                
-                // Create improved tab-separated format
-                let content = `${currentSubject.toUpperCase()} LESSON PLAN - Week of ${weekStart}\n\n`;
-                
-                // Add WALT and Success Criteria at the top
-                if (walt) {
-                    content += `WALT (We Are Learning To):\n${walt}\n\n`;
-                }
-                if (success) {
-                    content += `Success Criteria:\n${success}\n\n`;
-                }
-                
-                // Add links if any
-                if (links.length > 0) {
-                    content += `Resource Links:\n`;
-                    links.forEach(link => {
-                        content += `• ${link.title}: ${link.url}\n`;
-                    });
-                    content += `\n`;
-                }
-                
-                // Create the weekly planning table with proper formatting
-                content += `WEEKLY ACTIVITIES:\n\n`;
-                
-                // Create header row with proper tab separation
-                content += `Activity Type\tMonday\tTuesday\tWednesday\tThursday\tFriday\n`;
-                
-                // Ensure each cell has content or placeholder to maintain table structure
-                const warmupRow = activities.warmup.map(item => item.trim() || '[Enter activities]').join('\t');
-                const teachingRow = activities.teaching.map(item => item.trim() || '[Enter activities]').join('\t');
-                const tasksRow = activities.tasks.map(item => item.trim() || '[Enter activities]').join('\t');
-                
-                content += `Warm up/Review Activities\t${warmupRow}\n`;
-                content += `Whole Class Teaching\t${teachingRow}\n`;
-                content += `Tasks (Whole Class/Groups)\t${tasksRow}\n`;
-                
-                // Add group rows with proper formatting
-                activities.groups.forEach(group => {
-                    const groupRow = group.activities.map(item => item.trim() || '[Enter activities]').join('\t');
-                    content += `${group.name}\t${groupRow}\n`;
-                });
-                
-                // Copy to clipboard
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(content).then(() => {
-                        alert('✅ Lesson plan copied successfully!\n\n📋 Next steps:\n1. Click "Open Google Docs" below\n2. Create a new document\n3. Paste (Ctrl+V or Cmd+V)\n\n🎯 Google Docs will automatically convert the tabs into a proper table!');
-                    }).catch(() => {
-                        fallbackCopy(content);
-                    });
-                } else {
-                    fallbackCopy(content);
-                }
-                
-            } catch (error) {
-                console.error('Copy error:', error);
-                alert('❌ Copy failed. Please try again or use a different browser.');
-            }
-        }
-        
-        function fallbackCopy(content) {
-            try {
-                const textArea = document.createElement('textarea');
-                textArea.value = content;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                
-                const successful = document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                if (successful) {
-                    alert('✅ Lesson plan copied!\n\nPaste into Google Docs and it will automatically create a formatted table.');
-                } else {
-                    alert('❌ Copy failed. Please select all the text manually and copy it.');
-                }
-            } catch (err) {
-                alert('❌ Copy not supported. Please select and copy the text manually.');
             }
         }
 
@@ -1481,8 +1422,6 @@
         // Store links for each routine cell
         let routineLinks = {};
 
-
-
         function openLinkPopup(button) {
             const routineCell = button.closest('.routine-cell');
             const cellId = routineCell.dataset.cellId || Math.random().toString(36);
@@ -1609,7 +1548,7 @@
                 if (cell) {
                     const contentDiv = cell.querySelector('.routine-content');
                     const textarea = cell.querySelector('.routine-input');
-                    const textLines = textarea.value.split('\n').filter(line => line.trim());
+                    const textLines = textarea ? textarea.value.split('\n').filter(line => line.trim()) : [];
                     renderRoutineContent(cellId, contentDiv, textLines);
                 }
             }
@@ -1996,11 +1935,15 @@
         generatePlannerGrid();
         updateGroupButtons();
         renderLinks();
+        renderSubjectButtons(); // Render subject buttons with saved custom subjects
+        
+        // Set initial table header color for Maths (default subject)
+        updatePlanningTableHeader(currentSubject);
         
         // Load data for the current week after grid is generated
         setTimeout(() => {
             loadWeekData();
         }, 100);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9768db0ba529d9bb',t:'MTc1NjQzNzAzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'977bb4ceb289d9b7',t:'MTc1NjYzNDY5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
